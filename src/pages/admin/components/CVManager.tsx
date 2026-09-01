@@ -1,7 +1,8 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, ChangeEvent, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { useCVEntries } from '@/hooks/useCVEntries';
+import { useProfile } from '@/hooks/useProfile';
 import { Field, TextAreaField, FormCard } from './fields';
 
 interface CVForm {
@@ -25,10 +26,75 @@ const emptyForm: CVForm = {
 export default function CVManager() {
   const { t } = useTranslation();
   const { entries, loading, error, refetch } = useCVEntries();
+  const { profile, refetch: refetchProfile } = useProfile();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState<CVForm | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  const handlePdfUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+    if (file.type !== 'application/pdf') {
+      setMessage(t('admin.cv_pdf_invalid'));
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setUploading(true);
+    setMessage(null);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `cv-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('cv-files')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrl } = supabase.storage
+        .from('cv-files')
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from('profile')
+        .update({ cv_pdf_url: publicUrl.publicUrl })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      refetchProfile();
+      setMessage(t('common.saved'));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t('common.error');
+      setMessage(msg);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handlePdfRemove = async () => {
+    if (!profile) return;
+    setUploading(true);
+    setMessage(null);
+    try {
+      const { error } = await supabase
+        .from('profile')
+        .update({ cv_pdf_url: null })
+        .eq('id', profile.id);
+      if (error) throw error;
+      refetchProfile();
+      setMessage(t('common.saved'));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t('common.error');
+      setMessage(msg);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const typeLabel = (type: string) => {
     if (type === 'education') return t('admin.type_education');
@@ -114,6 +180,51 @@ export default function CVManager() {
         >
           {t('common.add')}
         </button>
+      </div>
+
+      <div className="bg-background-100 rounded-lg border border-background-200 p-5">
+        <h4 className="font-heading text-base font-semibold text-foreground-900 mb-1">
+          {t('admin.cv_pdf_title')}
+        </h4>
+        <p className="text-sm text-foreground-600 mb-4">{t('admin.cv_pdf_hint')}</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="px-4 py-2 bg-secondary-500 text-white rounded-md hover:bg-secondary-600 transition-colors text-sm font-medium whitespace-nowrap cursor-pointer disabled:opacity-60"
+          >
+            {profile?.cv_pdf_url ? t('admin.cv_pdf_change') : t('admin.cv_pdf_upload')}
+          </button>
+          {profile?.cv_pdf_url && (
+            <>
+              <a
+                href={profile.cv_pdf_url}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 bg-background-200 text-foreground-700 rounded-md hover:bg-background-300 transition-colors text-sm font-medium whitespace-nowrap cursor-pointer"
+              >
+                {t('admin.preview')}
+              </a>
+              <button
+                onClick={handlePdfRemove}
+                disabled={uploading}
+                className="px-4 py-2 bg-background-200 text-foreground-700 rounded-md hover:bg-red-100 hover:text-red-600 transition-colors text-sm font-medium whitespace-nowrap cursor-pointer disabled:opacity-60"
+              >
+                {t('admin.cv_pdf_remove')}
+              </button>
+            </>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            onChange={handlePdfUpload}
+            className="hidden"
+          />
+          {uploading && (
+            <span className="text-sm text-foreground-500">{t('common.loading')}</span>
+          )}
+        </div>
       </div>
 
       {editing && (

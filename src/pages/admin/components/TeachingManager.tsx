@@ -100,6 +100,24 @@ export default function TeachingManager() {
     }
   };
 
+  const moveCourse = async (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= courses.length) return;
+    const reordered = [...courses];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(targetIndex, 0, moved);
+    try {
+      await Promise.all(
+        reordered.map((c, i) =>
+          supabase.from('teaching_courses').update({ sort_order: i }).eq('id', c.id)
+        )
+      );
+      refetch();
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : t('common.error'));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -153,7 +171,7 @@ export default function TeachingManager() {
 
       {!loading && !error && (
         <div className="space-y-3">
-          {courses.map((course) => (
+          {courses.map((course, index) => (
             <div
               key={course.id}
               className="flex items-start justify-between gap-4 bg-background-100 rounded-lg border border-background-200 p-4"
@@ -166,7 +184,23 @@ export default function TeachingManager() {
                   {course.semester}
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => moveCourse(index, -1)}
+                  disabled={index === 0}
+                  className="w-8 h-8 flex items-center justify-center rounded-md bg-secondary-100 text-secondary-800 hover:bg-secondary-200 transition-colors cursor-pointer disabled:opacity-40"
+                  aria-label={t('admin.move_up')}
+                >
+                  <i className="ri-arrow-up-line" />
+                </button>
+                <button
+                  onClick={() => moveCourse(index, 1)}
+                  disabled={index === courses.length - 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-md bg-secondary-100 text-secondary-800 hover:bg-secondary-200 transition-colors cursor-pointer disabled:opacity-40"
+                  aria-label={t('admin.move_down')}
+                >
+                  <i className="ri-arrow-down-line" />
+                </button>
                 <button
                   onClick={() => startEdit(course as TeachingForm & { id: string })}
                   className="w-8 h-8 flex items-center justify-center rounded-md bg-secondary-100 text-secondary-800 hover:bg-secondary-200 transition-colors cursor-pointer"

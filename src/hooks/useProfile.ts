@@ -5,6 +5,7 @@ interface Profile {
   id: string;
   full_name: string;
   photo_url: string | null;
+  cv_pdf_url: string | null;
   email: string | null;
   institution: string | null;
   position: string | null;

@@ -3,7 +3,7 @@ import NotFound from "../pages/NotFound";
 import Home from "../pages/home/page";
 import CV from "../pages/cv/page";
 import Research from "../pages/research/page";
-import Publications from "../pages/publications/page";
+import NotesResources from "../pages/notes-resources/page";
 import Teaching from "../pages/teaching/page";
 import Contact from "../pages/contact/page";
 import Admin from "../pages/admin/page";
@@ -22,8 +22,8 @@ const routes: RouteObject[] = [
     element: <Research />,
   },
   {
-    path: "/publications",
-    element: <Publications />,
+    path: "/notes-resources",
+    element: <NotesResources />,
   },
   {
     path: "/teaching",

@@ -4,12 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import LoginForm from './components/LoginForm';
 import ProfileEditor from './components/ProfileEditor';
-import PublicationsManager from './components/PublicationsManager';
+import NotesResourcesManager from './components/NotesResourcesManager';
 import CVManager from './components/CVManager';
 import ResearchManager from './components/ResearchManager';
 import TeachingManager from './components/TeachingManager';
 
-type Tab = 'profile' | 'publications' | 'cv' | 'research' | 'teaching';
+type Tab = 'profile' | 'notes' | 'cv' | 'research' | 'teaching';
 
 export default function AdminPage() {
   const { t } = useTranslation();
@@ -54,7 +54,7 @@ export default function AdminPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'profile', label: t('admin.tab_profile') },
-    { key: 'publications', label: t('admin.tab_publications') },
+    { key: 'notes', label: t('admin.tab_notes') },
     { key: 'cv', label: t('admin.tab_cv') },
     { key: 'research', label: t('admin.tab_research') },
     { key: 'teaching', label: t('admin.tab_teaching') },
@@ -94,7 +94,7 @@ export default function AdminPage() {
         </div>
 
         {activeTab === 'profile' && <ProfileEditor />}
-        {activeTab === 'publications' && <PublicationsManager />}
+        {activeTab === 'notes' && <NotesResourcesManager />}
         {activeTab === 'cv' && <CVManager />}
         {activeTab === 'research' && <ResearchManager />}
         {activeTab === 'teaching' && <TeachingManager />}

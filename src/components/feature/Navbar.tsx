@@ -12,7 +12,7 @@ export default function Navbar() {
     { to: '/', label: t('nav.home') },
     { to: '/cv', label: t('nav.cv') },
     { to: '/research', label: t('nav.research') },
-    { to: '/publications', label: t('nav.publications') },
+    { to: '/notes-resources', label: t('nav.notes') },
     { to: '/teaching', label: t('nav.teaching') },
     { to: '/contact', label: t('nav.contact') },
   ];

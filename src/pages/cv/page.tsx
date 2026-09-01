@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import PageShell from '@/components/feature/PageShell';
 import { useCVEntries } from '@/hooks/useCVEntries';
+import { useProfile } from '@/hooks/useProfile';
 import type { CVEntry } from '@/hooks/useCVEntries';
 
 function TimelineSection({
@@ -80,6 +81,7 @@ function TimelineSection({
 export default function CVPage() {
   const { t } = useTranslation();
   const { entries, loading, error } = useCVEntries();
+  const { profile } = useProfile();
 
   const education = entries.filter((e) => e.type === 'education');
   const experience = entries.filter((e) => e.type === 'experience');
@@ -88,6 +90,32 @@ export default function CVPage() {
   return (
     <PageShell pageTitle={t('nav.cv')}>
       <div className="max-w-3xl">
+        {profile?.cv_pdf_url && (
+          <div className="mb-10 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm text-foreground-600">
+                {t('cv.pdf_available')}
+              </p>
+              <a
+                href={profile.cv_pdf_url}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors text-sm font-medium whitespace-nowrap cursor-pointer w-fit"
+              >
+                <i className="ri-download-2-line" />
+                {t('cv.download')}
+              </a>
+            </div>
+            <div className="rounded-lg border border-background-200 overflow-hidden">
+              <iframe
+                src={profile.cv_pdf_url}
+                title={t('cv.download')}
+                className="w-full h-[600px]"
+              />
+            </div>
+          </div>
+        )}
         <TimelineSection title={t('cv.education')} items={education} loading={loading} error={error} />
         <TimelineSection title={t('cv.experience')} items={experience} loading={loading} error={error} />
         <TimelineSection title={t('cv.awards')} items={awards} loading={loading} error={error} />
